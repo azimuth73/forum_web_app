@@ -36,80 +36,93 @@ def get_db():
 #     hashed_password: str
 
 
-class Thread(BaseModel):
+class BaseThread(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     text: str = Field(min_length=1, max_length=1000)
+
+
+class ThreadIn(BaseThread):
+    pass
+
+
+class ThreadOut(BaseThread):
+    id: int
     created: datetime
 
 
-class Reply(BaseModel):
+class BaseReply(BaseModel):
+    thread_id: int
     text: str = Field(min_length=1, max_length=1000)
+
+
+class ReplyIn(BaseReply):
+    pass
+
+
+class ReplyOut(BaseReply):
+    id: int
     created: datetime
 
 
-@app.get('/')
+@app.get(path='/')
 def read_root(db: Session = Depends(get_db)):
     # TODO: Do some error handling if no threads
-    return db.query(models.Threads).order_by(models.Threads.created).all()
+    return db.query(models.Thread).order_by(models.Thread.created).all()
 
 
-@app.post('/threads/')
-def create_thread(thread: Thread, db: Session = Depends(get_db)):
-    thread_model = models.Threads()
+@app.post(path='/threads/', response_model=ThreadOut)
+def create_thread(thread: ThreadIn, db: Session = Depends(get_db)):
+    db_thread = models.Thread()
 
-    thread_model.title = thread.title
-    thread_model.text = thread.text
-    thread_model.created = thread.created
+    db_thread.title = thread.title
+    db_thread.text = thread.text
+    db_thread.created = datetime.now()
 
-    db.add(thread_model)
+    db.add(db_thread)
     db.commit()
+    db.refresh(db_thread)
 
-    return thread
+    return db_thread
 
 
-@app.get('/threads/{thread_id}')
+@app.get(path='/threads/{thread_id}', response_model=ThreadOut)
 def read_thread(thread_id: int, db: Session = Depends(get_db)):
 
-    thread_model = db.query(models.Threads).filter(models.Threads.id == thread_id).first()
-    if thread_model is None:
+    db_thread = db.query(models.Thread).filter(models.Thread.id == thread_id).first()
+    if db_thread is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'Thread with ID={thread_id} not found'
         )
 
-    thread = Thread()
-    thread.title = thread_model.title
-    thread.text = thread_model.text
-    thread.created = thread_model.created
-
-    return thread
+    return db_thread
 
 
-@app.post('/threads/{thread_id}/replies/')
-def create_reply(thread_id: int, reply: Reply, db: Session = Depends(get_db)):
-    reply_model = models.Replies()
+@app.post(path='/threads/{thread_id}/replies/', response_model=ReplyOut)
+def create_reply(reply: ReplyIn, db: Session = Depends(get_db)):
+    db_reply = models.Reply()
 
-    reply_model.thread_id = thread_id
-    reply_model.title = reply.title
-    reply_model.text = reply.text
-    reply_model.created = reply.created
+    db_reply.thread_id = reply.thread_id
+    db_reply.text = reply.text
+    db_reply.created = datetime.now()
 
-    db.add(reply_model)
+    db.add(db_reply)
     db.commit()
+    db.refresh(db_reply)
 
-    return reply
+    return db_reply
 
 
-@app.get('/threads/{thread_id}/replies/{reply_id}')
-def read_reply(thread_id: int, reply_id: int):
-    reply: Optional[Reply] = None
-    # TODO: Replace with actual data retrieval logic
-    if reply:
-        return reply
-    else:
+@app.get(path='/threads/{thread_id}/replies/{reply_id}', response_model=ReplyOut)
+def read_reply(thread_id: int, reply_id: int, db: Session = Depends(get_db)):
+    db_reply = db.query(models.Reply).filter(models.Reply.id == reply_id, models.Reply.thread_id == thread_id).first()
+    if db_reply is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'Reply with ID={reply_id} not found'
+            detail=f'Reply with ID={reply_id} in Thread with ID={thread_id} not found'
         )
+
+    return db_reply
+
 
 

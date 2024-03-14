@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from database import Base
 
 
-# class Users(Base):
+# class User(Base):
 #     __tablename__ = "users"
 #
 #     id = Column(Integer, primary_key=True, index=True)
@@ -10,7 +10,7 @@ from database import Base
 #     hashed_password = Column(String)
 
 
-class Threads(Base):
+class Thread(Base):
     __tablename__ = 'threads'
 
     id = Column(Integer, primary_key=True, index=True)
@@ -20,7 +20,7 @@ class Threads(Base):
     created = Column(DateTime)
 
 
-class Replies(Base):
+class Reply(Base):
     __tablename__ = 'replies'
 
     id = Column(Integer, primary_key=True, index=True)
