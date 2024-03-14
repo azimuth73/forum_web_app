@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, status, Depends
 from typing import Optional
 from pydantic import BaseModel, Field
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine, SessionLocal
 from sqlalchemy.orm import Session
@@ -9,6 +10,17 @@ from sqlalchemy.orm import Session
 app = FastAPI()
 
 models.Base.metadata.create_all(bind=engine)
+
+origins = [
+    '*'
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 
 def get_db():
@@ -38,7 +50,7 @@ class Reply(BaseModel):
 @app.get('/')
 def read_root(db: Session = Depends(get_db)):
     # TODO: Do some error handling if no threads
-    return db.query(models.Threads).all()
+    return db.query(models.Threads).order_by(models.Threads.created).all()
 
 
 @app.post('/threads/')
@@ -65,12 +77,25 @@ def read_thread(thread_id: int, db: Session = Depends(get_db)):
             detail=f'Thread with ID={thread_id} not found'
         )
 
-    return thread_model
+    thread = Thread()
+    thread.title = thread_model.title
+    thread.text = thread_model.text
+    thread.created = thread_model.created
+
+    return thread
 
 
 @app.post('/threads/{thread_id}/replies/')
-def create_reply(thread_id: int, reply: Reply):
-    # TODO: Logic to add a new reply to a thread and save the reply data to a database
+def create_reply(thread_id: int, reply: Reply, db: Session = Depends(get_db)):
+    reply_model = models.Replies()
+
+    reply_model.thread_id = thread_id
+    reply_model.title = reply.title
+    reply_model.text = reply.text
+    reply_model.created = reply.created
+
+    db.add(reply_model)
+    db.commit()
 
     return reply
 
