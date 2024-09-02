@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Simple Forum</h1>
+    </header>
+    <main>
+        <section id="threads-section">
+            <h2>Threads</h2>
+            <div id="threads-list"></div>
+            <div id="create-thread">
+                <h3>Create New Thread</h3>
+                <form id="thread-form">
+                    <label for="title">Title:</label>
+                    <input type="text" id="title" name="title" required>
+                    <label for="text">Text:</label>
+                    <textarea id="text" name="text" required></textarea>
+                    <button type="submit">Create Thread</button>
+                </form>
+            </div>
+        </section>
+        <section id="replies-section" style="display:none;">
+            <h2>Replies</h2>
+            <div id="replies-list"></div>
+            <div id="create-reply">
+                <h3>Reply to Thread</h3>
+                <form id="reply-form">
+                    <label for="reply-text">Text:</label>
+                    <textarea id="reply-text" name="text" required></textarea>
+                    <button type="submit">Post Reply</button>
+                </form>
+            </div>
+        </section>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>
