@@ -114,7 +114,7 @@ def read_replies(thread_id: int, db: Session = Depends(get_db)):
     return db_replies
 
 
-@app.post(path='/threads/{thread_id}/replies/', response_model=ReplyOut)
+@app.post(path='/replies/', response_model=ReplyOut)
 def create_reply(reply: ReplyIn, db: Session = Depends(get_db)):
     db_reply = models.Reply()
 
