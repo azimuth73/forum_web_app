@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, status, Depends, Security
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
 from typing import List
 from pydantic import BaseModel, Field, StrictInt
 from datetime import datetime, timedelta
@@ -35,6 +35,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 scheme
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+# Security scheme for Swagger UI
+security = HTTPBearer()
 
 
 # Database dependency
@@ -123,13 +126,15 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+# Dependency to get the current user
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
@@ -185,7 +190,7 @@ def read_threads(db: Session = Depends(get_db)):
 
 
 @app.post("/threads/", response_model=ThreadOut)
-def create_thread(thread: ThreadIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def create_thread(thread: ThreadIn, current_user: User = Security(get_current_user), db: Session = Depends(get_db)):
     db_thread = models.Thread(
         title=thread.title,
         text=thread.text,
@@ -208,12 +213,18 @@ def read_thread(thread_id: int, db: Session = Depends(get_db)):
 
 @app.get("/threads/{thread_id}/replies/", response_model=List[ReplyOut])
 def read_replies(thread_id: int, db: Session = Depends(get_db)):
+    # Check if the thread exists
+    read_thread(thread_id=thread_id, db=db)
+
     db_replies = db.query(models.Reply).filter(models.Reply.thread_id == thread_id).all()
     return db_replies
 
 
 @app.post("/replies/", response_model=ReplyOut)
-def create_reply(reply: ReplyIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def create_reply(reply: ReplyIn, current_user: User = Security(get_current_user), db: Session = Depends(get_db)):
+    # Ensure the thread exists before attempting to create the reply
+    read_thread(thread_id=reply.thread_id, db=db)
+
     db_reply = models.Reply(
         thread_id=reply.thread_id,
         text=reply.text,
@@ -228,6 +239,9 @@ def create_reply(reply: ReplyIn, current_user: User = Depends(get_current_user),
 
 @app.get("/threads/{thread_id}/replies/{reply_id}", response_model=ReplyOut)
 def read_reply(thread_id: int, reply_id: int, db: Session = Depends(get_db)):
+    # Ensure the thread exists before attempting to read the reply
+    read_thread(thread_id=thread_id, db=db)
+
     db_reply = db.query(models.Reply).filter(models.Reply.id == reply_id, models.Reply.thread_id == thread_id).first()
     if db_reply is None:
         raise HTTPException(status_code=404, detail="Reply not found")
