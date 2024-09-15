@@ -317,3 +317,52 @@ def delete_thread(thread_id: int, current_user: User = Depends(get_current_admin
 
     return db_thread
 
+
+class ThreadEdit(BaseModel):
+    title: str = Field(min_length=1, max_length=200, description="Title of the thread")
+    text: str = Field(min_length=1, max_length=2000, description="Text of the thread")
+
+
+class ReplyEdit(BaseModel):
+    text: str = Field(min_length=1, max_length=2000, description="Text of the reply")
+
+
+# Edit a thread
+@app.put("/threads/{thread_id}/edit", response_model=ThreadOut)
+def edit_thread(thread_id: int, thread_data: ThreadEdit, current_user: User = Security(get_current_user), db: Session = Depends(get_db)):
+    # Fetch the thread
+    db_thread = db.query(models.Thread).filter(models.Thread.id == thread_id).first()
+    if db_thread is None:
+        raise HTTPException(status_code=404, detail="Thread not found")
+
+    # Check if the current user is the owner of the thread
+    if db_thread.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not authorized to edit this thread")
+
+    # Update thread title and text, and mark as edited
+    db_thread.title = thread_data.title
+    db_thread.text = thread_data.text
+    db_thread.edited = True
+    db.commit()
+    db.refresh(db_thread)
+    return db_thread
+
+
+# Edit a reply
+@app.put("/replies/{reply_id}/edit", response_model=ReplyOut)
+def edit_reply(reply_id: int, reply_data: ReplyEdit, current_user: User = Security(get_current_user), db: Session = Depends(get_db)):
+    # Fetch the reply
+    db_reply = db.query(models.Reply).filter(models.Reply.id == reply_id).first()
+    if db_reply is None:
+        raise HTTPException(status_code=404, detail="Reply not found")
+
+    # Check if the current user is the owner of the reply
+    if db_reply.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You are not authorized to edit this reply")
+
+    # Update reply text and mark as edited
+    db_reply.text = reply_data.text
+    db_reply.edited = True
+    db.commit()
+    db.refresh(db_reply)
+    return db_reply

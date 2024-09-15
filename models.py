@@ -19,6 +19,7 @@ class Thread(Base):
     title = Column(String)
     text = Column(String)
     created = Column(DateTime)
+    edited = Column(Boolean, default=False)
 
 
 class Reply(Base):
@@ -29,3 +30,4 @@ class Reply(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     text = Column(String)
     created = Column(DateTime)
+    edited = Column(Boolean, default=False)
