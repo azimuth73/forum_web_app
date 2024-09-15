@@ -1,5 +1,6 @@
 body {
     font-family: Arial, sans-serif;
+    line-height: 1.6;
     margin: 0;
     padding: 0;
     background-color: #f4f4f4;
@@ -7,71 +8,62 @@ body {
 
 header {
     background-color: #333;
-    color: white;
-    padding: 10px;
+    color: #fff;
+    padding: 1rem;
     text-align: center;
 }
 
-main {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-h1, h2, h3 {
-    color: #333;
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-}
-
-label {
-    margin-top: 10px;
-    font-weight: bold;
-}
-
-input[type="text"], textarea {
-    padding: 8px;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+nav {
+    margin-top: 1rem;
 }
 
 button {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #5cb85c;
-    color: white;
+    background-color: #4CAF50;
     border: none;
-    border-radius: 4px;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
     cursor: pointer;
+    border-radius: 5px;
 }
 
-button:hover {
-    background-color: #4cae4c;
-}
-
-#threads-list, #replies-list {
-    margin-top: 20px;
+main {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 .thread, .reply {
+    background-color: #fff;
     border: 1px solid #ddd;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 5px;
 }
 
-.thread-title {
-    font-size: 1.2em;
-    font-weight: bold;
+.thread h3, .reply h4 {
+    margin-top: 0;
 }
 
-.thread-text, .reply-text {
-    margin-top: 5px;
+form {
+    background-color: #fff;
+    padding: 1rem;
+    border-radius: 5px;
+}
+
+input[type="text"], input[type="password"], textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.error {
+    color: red;
+    margin-bottom: 1rem;
 }

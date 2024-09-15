@@ -26,7 +26,7 @@ app.add_middleware(
 )
 
 # JWT settings
-SECRET_KEY = "your-secret-key"  # Change this to a secure secret key
+SECRET_KEY = "your-secret-key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -246,3 +246,10 @@ def read_reply(thread_id: int, reply_id: int, db: Session = Depends(get_db)):
     if db_reply is None:
         raise HTTPException(status_code=404, detail="Reply not found")
     return db_reply
+
+
+# Route to get all users
+@app.get("/users/", response_model=List[User])
+def read_users(db: Session = Depends(get_db)):
+    db_users = db.query(models.User).all()
+    return db_users
