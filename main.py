@@ -58,6 +58,7 @@ class UserCreate(BaseModel):
 class User(BaseModel):
     id: int
     username: str
+    is_admin: bool
 
 
 class Token(BaseModel):
@@ -148,14 +149,32 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
     return user
 
 
+# Dependency to check if the current user is an admin
+def get_current_admin_user(current_user: User = Depends(get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+    return current_user
+
+
 # Routes
 @app.post("/register", response_model=User)
 def register(user: UserCreate, db: Session = Depends(get_db)):
+    # Check if any user already exists in the database
+    user_count = db.query(models.User).count()
+
+    # Check if the username is already taken
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
+
+    # Hash the password
     hashed_password = get_password_hash(user.password)
-    new_user = models.User(username=user.username, password=hashed_password)
+
+    # If no users exist, make this user an admin
+    is_admin = user_count == 0
+
+    # Create the new user
+    new_user = models.User(username=user.username, password=hashed_password, is_admin=is_admin)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -253,3 +272,48 @@ def read_reply(thread_id: int, reply_id: int, db: Session = Depends(get_db)):
 def read_users(db: Session = Depends(get_db)):
     db_users = db.query(models.User).all()
     return db_users
+
+
+@app.put("/users/{user_id}/make-admin", response_model=User)
+def make_admin(user_id: int, current_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db_user.is_admin = True
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+@app.delete("/replies/{reply_id}", response_model=ReplyOut)
+def delete_reply(reply_id: int, current_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    db_reply = db.query(models.Reply).filter(models.Reply.id == reply_id).first()
+    if db_reply is None:
+        raise HTTPException(status_code=404, detail="Reply not found")
+
+    db.delete(db_reply)
+    db.commit()
+    return db_reply
+
+
+@app.delete("/threads/{thread_id}", response_model=ThreadOut)
+def delete_thread(thread_id: int, current_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    # Fetch the thread
+    db_thread = db.query(models.Thread).filter(models.Thread.id == thread_id).first()
+    if db_thread is None:
+        raise HTTPException(status_code=404, detail="Thread not found")
+
+    # Fetch all replies related to the thread
+    db_replies = db.query(models.Reply).filter(models.Reply.thread_id == thread_id).all()
+
+    # Delete all replies
+    for reply in db_replies:
+        db.delete(reply)
+
+    # Delete the thread
+    db.delete(db_thread)
+    db.commit()
+
+    return db_thread
+
