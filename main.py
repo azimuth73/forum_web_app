@@ -51,7 +51,7 @@ def get_db():
 
 # Pydantic models
 class UserCreate(BaseModel):
-    username: str = Field(min_length=5, max_length=20)
+    username: str = Field(min_length=4, max_length=20)
     password: str
 
 
@@ -83,6 +83,7 @@ class ThreadOut(BaseThread):
     id: StrictInt = Field(gt=0)
     created: datetime
     user_id: int
+    edited: bool
 
 
 class BaseReply(BaseModel):
@@ -98,6 +99,7 @@ class ReplyOut(BaseReply):
     id: StrictInt = Field(gt=0)
     created: datetime
     user_id: int
+    edited: bool
 
 
 # Helper functions
@@ -214,7 +216,8 @@ def create_thread(thread: ThreadIn, current_user: User = Security(get_current_us
         title=thread.title,
         text=thread.text,
         created=datetime.now(),
-        user_id=current_user.id
+        user_id=current_user.id,
+        edited=False
     )
     db.add(db_thread)
     db.commit()
@@ -248,7 +251,8 @@ def create_reply(reply: ReplyIn, current_user: User = Security(get_current_user)
         thread_id=reply.thread_id,
         text=reply.text,
         created=datetime.now(),
-        user_id=current_user.id
+        user_id=current_user.id,
+        edited=False
     )
     db.add(db_reply)
     db.commit()
@@ -272,6 +276,12 @@ def read_reply(thread_id: int, reply_id: int, db: Session = Depends(get_db)):
 def read_users(db: Session = Depends(get_db)):
     db_users = db.query(models.User).all()
     return db_users
+
+
+# Get current logged-in user
+@app.get("/users/me", response_model=User)
+async def get_current_user_info(current_user: User = Depends(get_current_user)):
+    return current_user
 
 
 @app.put("/users/{user_id}/make-admin", response_model=User)
