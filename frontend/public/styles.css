@@ -1,20 +1,23 @@
 body {
     font-family: Arial, sans-serif;
-    line-height: 1.6;
+    background-color: #121212;
+    color: #e0e0e0;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
 }
 
 header {
-    background-color: #333;
+    background-color: #1f1f1f;
     color: #fff;
     padding: 1rem;
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-nav {
-    margin-top: 1rem;
+.nav-left, .nav-right {
+    display: flex;
+    align-items: center;
 }
 
 button {
@@ -22,48 +25,66 @@ button {
     border: none;
     color: white;
     padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
+    margin: 0 5px;
     cursor: pointer;
     border-radius: 5px;
 }
 
+button:hover {
+    background-color: #45a049;
+}
+
+button.delete-btn {
+    background-color: #f44336;
+}
+
+button.delete-btn:hover {
+    background-color: #e53935;
+}
+
+button.edit-btn {
+    background-color: #2196F3;
+}
+
+button.edit-btn:hover {
+    background-color: #1976D2;
+}
+
 main {
     padding: 2rem;
-    max-width: 800px;
-    margin: 0 auto;
 }
 
 .thread, .reply {
-    background-color: #fff;
-    border: 1px solid #ddd;
+    background-color: #1e1e1e;
+    border: 1px solid #333;
     padding: 1rem;
     margin-bottom: 1rem;
     border-radius: 5px;
 }
 
-.thread h3, .reply h4 {
-    margin-top: 0;
-}
-
-form {
-    background-color: #fff;
-    padding: 1rem;
+.error, .message {
+    color: #f44336;
+    padding: 10px;
     border-radius: 5px;
+    text-align: center;
+    margin-bottom: 1rem;
 }
 
-input[type="text"], input[type="password"], textarea {
-    width: 100%;
-    padding: 0.5rem;
-    margin-bottom: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 3px;
+.hidden {
+    display: none;
 }
 
-.error {
-    color: red;
-    margin-bottom: 1rem;
+.admin {
+    color: #FF5722;
+}
+
+.popup {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
 }

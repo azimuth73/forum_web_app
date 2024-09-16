@@ -1,26 +1,65 @@
 const apiUrl = 'http://localhost:8000';
 let token = localStorage.getItem('token');
+let currentUser = null;
 
 const mainContent = document.getElementById('mainContent');
 const homeBtn = document.getElementById('homeBtn');
+const usersBtn = document.getElementById('usersBtn');
 const registerBtn = document.getElementById('registerBtn');
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
+const usernameDisplay = document.getElementById('usernameDisplay');
+const popup = document.getElementById('popup');
 
 homeBtn.addEventListener('click', showHome);
+usersBtn.addEventListener('click', showUsers);
 registerBtn.addEventListener('click', showRegisterForm);
 loginBtn.addEventListener('click', showLoginForm);
 logoutBtn.addEventListener('click', logout);
 
 function updateNavigation() {
     if (token) {
+        getUserInfo();
         loginBtn.style.display = 'none';
         registerBtn.style.display = 'none';
         logoutBtn.style.display = 'inline-block';
     } else {
+        currentUser = null;
+        usernameDisplay.textContent = '';
         loginBtn.style.display = 'inline-block';
         registerBtn.style.display = 'inline-block';
         logoutBtn.style.display = 'none';
+    }
+}
+
+// Attach event listeners after dynamically rendering content
+function attachEventListeners() {
+    document.querySelectorAll('.view-replies-btn').forEach(button => {
+        button.addEventListener('click', () => showThread(button.dataset.threadId));
+    });
+    document.querySelectorAll('.create-thread-btn').forEach(button => {
+        button.addEventListener('click', showCreateThreadForm);
+    });
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', () => showEditThreadForm(button.dataset.threadId));
+    });
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', () => deleteThread(button.dataset.threadId));
+    });
+    document.querySelectorAll('.reply-btn').forEach(button => {
+        button.addEventListener('click', e => createReply(e, button.dataset.threadId));
+    });
+}
+
+async function getUserInfo() {
+    try {
+        const response = await fetch(`${apiUrl}/users/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        currentUser = await response.json();
+        usernameDisplay.textContent = `${currentUser.username}`;
+    } catch (error) {
+        console.error('Error fetching user info:', error);
     }
 }
 
@@ -29,100 +68,102 @@ async function showHome() {
         const response = await fetch(`${apiUrl}/threads/`);
         const threads = await response.json();
         let html = '<h2>Threads</h2>';
-        html += '<button onclick="showCreateThreadForm()">Create New Thread</button>';
+        if (token) {
+            html += '<button class="create-thread-btn">Create New Thread</button>';
+        }
+        html += '<div><button onclick="sortThreadsByDate(\'asc\')">Sort Ascending</button> <button onclick="sortThreadsByDate(\'desc\')">Sort Descending</button></div>';
         threads.forEach(thread => {
             html += `
                 <div class="thread">
                     <h3>${thread.title}</h3>
+                    <p>By ${thread.username} on ${new Date(thread.created).toLocaleString()}</p>
                     <p>${thread.text}</p>
-                    <button onclick="showThread(${thread.id})">View Replies</button>
+                    <button class="view-replies-btn" data-thread-id="${thread.id}">View Replies</button>
+                    ${getThreadControls(thread)}
                 </div>
             `;
         });
         mainContent.innerHTML = html;
+        attachEventListeners(); // Bind buttons after rendering
     } catch (error) {
         showError('Error fetching threads');
     }
 }
 
-function showRegisterForm() {
-    mainContent.innerHTML = `
-        <h2>Register</h2>
-        <form id="registerForm">
-            <input type="text" id="regUsername" placeholder="Username" required>
-            <input type="password" id="regPassword" placeholder="Password" required>
-            <button type="submit">Register</button>
-        </form>
-    `;
-    document.getElementById('registerForm').addEventListener('submit', register);
+function getThreadControls(thread) {
+    if (!currentUser) return '';
+    let controls = '';
+    if (currentUser.id === thread.user_id) {
+        controls += `<button class="edit-btn" data-thread-id="${thread.id}">Edit</button>`;
+    }
+    if (currentUser.is_admin) {
+        controls += `<button class="delete-btn" data-thread-id="${thread.id}">Delete</button>`;
+    }
+    return controls;
 }
 
-function showLoginForm() {
-    mainContent.innerHTML = `
-        <h2>Login</h2>
-        <form id="loginForm">
-            <input type="text" id="loginUsername" placeholder="Username" required>
-            <input type="password" id="loginPassword" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-    `;
-    document.getElementById('loginForm').addEventListener('submit', login);
-}
-
-async function register(e) {
-    e.preventDefault();
-    const username = document.getElementById('regUsername').value;
-    const password = document.getElementById('regPassword').value;
+async function showUsers() {
     try {
-        const response = await fetch(`${apiUrl}/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+        const response = await fetch(`${apiUrl}/users/`);
+        const users = await response.json();
+        let html = '<h2>Users</h2>';
+        html += '<input type="text" id="userSearch" placeholder="Search by name"><button onclick="searchUsers()">Search</button>';
+        users.forEach(user => {
+            const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
+            html += `<p>${user.username} ${adminLabel}</p>`;
         });
-        if (response.ok) {
-            showLoginForm();
-            showMessage('Registration successful. Please log in.');
-        } else {
-            const error = await response.json();
-            showError(error.detail);
-        }
+        mainContent.innerHTML = html;
     } catch (error) {
-        showError('Error during registration');
+        showError('Error fetching users');
     }
 }
 
-async function login(e) {
-    e.preventDefault();
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
+async function searchUsers() {
+    const searchValue = document.getElementById('userSearch').value;
+    // Implement search logic based on username
+}
+
+async function showThread(threadId) {
     try {
-        const response = await fetch(`${apiUrl}/token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+        const threadResponse = await fetch(`${apiUrl}/threads/${threadId}`);
+        const thread = await threadResponse.json();
+        const repliesResponse = await fetch(`${apiUrl}/threads/${threadId}/replies/`);
+        const replies = await repliesResponse.json();
+
+        let html = `
+            <h2>${thread.title}</h2>
+            <p>By ${thread.username} on ${new Date(thread.created).toLocaleString()}</p>
+            <p>${thread.text}</p>
+            <h3>Replies</h3>
+        `;
+
+        replies.forEach(reply => {
+            html += `
+                <div class="reply">
+                    <p>${reply.text}</p>
+                    <p>By ${reply.username} on ${new Date(reply.created).toLocaleString()}</p>
+                </div>
+            `;
         });
-        if (response.ok) {
-            const data = await response.json();
-            token = data.access_token;
-            localStorage.setItem('token', token);
-            updateNavigation();
-            showHome();
-            showMessage('Login successful');
-        } else {
-            const error = await response.json();
-            showError(error.detail);
-        }
+
+        html += `
+            <h3>Add Reply</h3>
+            <form id="replyForm">
+                <textarea id="replyText" placeholder="Your reply" required></textarea>
+                <button class="reply-btn" data-thread-id="${thread.id}" type="submit">Submit Reply</button>
+            </form>
+        `;
+
+        mainContent.innerHTML = html;
+        attachEventListeners(); // Attach event listener for reply form submission
     } catch (error) {
-        showError('Error during login');
+        showError('Error fetching thread and replies');
     }
 }
 
-function logout() {
-    token = null;
-    localStorage.removeItem('token');
-    updateNavigation();
-    showHome();
-    showMessage('Logout successful');
+function sortThreadsByDate(order) {
+    // Fetch and sort threads by date in ascending/descending order
+    showHome(); // Call showHome to re-render the sorted threads
 }
 
 function showCreateThreadForm() {
@@ -166,49 +207,34 @@ async function createThread(e) {
     }
 }
 
-async function showThread(threadId) {
-    try {
-        const threadResponse = await fetch(`${apiUrl}/threads/${threadId}`);
-        const thread = await threadResponse.json();
-        const repliesResponse = await fetch(`${apiUrl}/threads/${threadId}/replies/`);
-        const replies = await repliesResponse.json();
-
-        let html = `
-            <h2>${thread.title}</h2>
-            <p>${thread.text}</p>
-            <h3>Replies</h3>
-        `;
-
-        replies.forEach(reply => {
-            html += `
-                <div class="reply">
-                    <p>${reply.text}</p>
-                </div>
-            `;
-        });
-
-        html += `
-            <h3>Add Reply</h3>
-            <form id="replyForm">
-                <textarea id="replyText" placeholder="Your reply" required></textarea>
-                <button type="submit">Submit Reply</button>
-            </form>
-        `;
-
-        mainContent.innerHTML = html;
-        document.getElementById('replyForm').addEventListener('submit', e => createReply(e, threadId));
-    } catch (error) {
-        showError('Error fetching thread and replies');
-    }
-}
-
 async function createReply(e, threadId) {
     e.preventDefault();
+
     if (!token) {
-        showError('You must be logged in to reply');
+        showError('You must be logged in to reply.');
         return;
     }
-    const text = document.getElementById('replyText').value;
+
+    const text = document.getElementById('replyText').value.trim();  // Ensure no leading/trailing whitespace
+
+    if (!text) {
+        showError('Reply text cannot be empty.');
+        return;
+    }
+
+    // Convert threadId to an integer
+    const integerThreadId = parseInt(threadId, 10);
+
+    if (isNaN(integerThreadId)) {
+        showError('Invalid thread ID.');
+        return;
+    }
+
+    const payload = {
+        thread_id: integerThreadId,   // Ensure thread_id is sent correctly
+        text: text
+    };
+
     try {
         const response = await fetch(`${apiUrl}/replies/`, {
             method: 'POST',
@@ -216,36 +242,138 @@ async function createReply(e, threadId) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ thread_id: threadId, text })
+            body: JSON.stringify(payload)  // Send thread_id and text in body
+        });
+
+        if (response.ok) {
+            showThread(threadId);  // Refresh replies after posting
+            showMessage('Reply added successfully.');
+        } else {
+            const error = await response.json();
+            showError(error.detail || 'Failed to create reply.');
+        }
+    } catch (error) {
+        showError('Error creating reply: ' + error.message);
+    }
+}
+
+
+
+async function deleteThread(threadId) {
+    if (!currentUser || !currentUser.is_admin) return;
+    try {
+        const response = await fetch(`${apiUrl}/threads/${threadId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
-            showThread(threadId);
-            showMessage('Reply added successfully');
+            showHome();
+            showMessage('Thread deleted successfully');
         } else {
             const error = await response.json();
             showError(error.detail);
         }
     } catch (error) {
-        showError('Error creating reply');
+        showError('Error deleting thread');
     }
 }
 
+function showRegisterForm() {
+    mainContent.innerHTML = `
+        <h2>Register</h2>
+        <form id="registerForm">
+            <input type="text" id="regUsername" placeholder="Username" required>
+            <input type="password" id="regPassword" placeholder="Password" required>
+            <button type="submit">Register</button>
+        </form>
+    `;
+    document.getElementById('registerForm').addEventListener('submit', register);
+}
+
+function showLoginForm() {
+    mainContent.innerHTML = `
+        <h2>Login</h2>
+        <form id="loginForm">
+            <input type="text" id="loginUsername" placeholder="Username" required>
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+    `;
+    document.getElementById('loginForm').addEventListener('submit', login);
+}
+
+async function register(e) {
+    e.preventDefault();
+    const username = document.getElementById('regUsername').value;
+    const password = document.getElementById('regPassword').value;
+    try {
+        const response = await fetch(`${apiUrl}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        if (response.ok) {
+            const userData = await response.json();
+            loginUser(userData.username, password);
+        } else {
+            const error = await response.json();
+            showError(error.detail);
+        }
+    } catch (error) {
+        showError('Error during registration');
+    }
+}
+
+async function login(e) {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    loginUser(username, password);
+}
+
+async function loginUser(username, password) {
+    try {
+        const response = await fetch(`${apiUrl}/token`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+        });
+        if (response.ok) {
+            const data = await response.json();
+            token = data.access_token;
+            localStorage.setItem('token', token);
+            updateNavigation();
+            showHome();
+            showMessage('Login successful');
+        } else {
+            const error = await response.json();
+            showError(error.detail);
+        }
+    } catch (error) {
+        showError('Error during login');
+    }
+}
+
+function logout() {
+    token = null;
+    localStorage.removeItem('token');
+    updateNavigation();
+    showHome();
+    showMessage('Logout successful');
+}
+
 function showError(message) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error';
-    errorDiv.textContent = message;
-    mainContent.insertBefore(errorDiv, mainContent.firstChild);
-    setTimeout(() => errorDiv.remove(), 5000);
+    popup.classList.remove('hidden');
+    popup.textContent = message;
+    setTimeout(() => popup.classList.add('hidden'), 5000);
 }
 
 function showMessage(message) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'message';
-    messageDiv.textContent = message;
-    mainContent.insertBefore(messageDiv, mainContent.firstChild);
-    setTimeout(() => messageDiv.remove(), 5000);
+    popup.classList.remove('hidden');
+    popup.textContent = message;
+    setTimeout(() => popup.classList.add('hidden'), 5000);
 }
 
-// Initial setup
+// Initialize the app with the home page and correct navigation state
 updateNavigation();
 showHome();

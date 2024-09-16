@@ -8,18 +8,24 @@
 </head>
 <body>
     <header>
-        <h1>Forum App</h1>
-        <nav>
+        <div class="nav-left">
             <button id="homeBtn">Home</button>
-            <button id="registerBtn">Register</button>
+            <button id="usersBtn">Users</button>
+        </div>
+        <h1>Forum App</h1>
+        <div class="nav-right">
+            <span id="usernameDisplay"></span>
             <button id="loginBtn">Login</button>
+            <button id="registerBtn">Register</button>
             <button id="logoutBtn" style="display: none;">Logout</button>
-        </nav>
+        </div>
     </header>
 
     <main id="mainContent">
         <!-- Content will be dynamically inserted here -->
     </main>
+
+    <div id="popup" class="hidden"></div>
 
     <script src="app.js"></script>
 </body>
