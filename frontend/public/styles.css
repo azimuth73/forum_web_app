@@ -88,3 +88,12 @@ main {
     border-radius: 5px;
     z-index: 1000;
 }
+
+.reply-textarea {
+    width: 100%; /* Full width of the parent container */
+    height: auto; /* Height adjusts automatically based on content */
+    min-height: 100px; /* Minimum height */
+    max-height: 200px; /* Maximum height */
+    resize: vertical; /* Allow vertical resizing only */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}

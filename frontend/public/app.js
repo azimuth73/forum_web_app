@@ -297,11 +297,11 @@ async function showThread(threadId) {
         html += `
             <h3>Add a reply:</h3>
             <form id="replyForm">
-                <textarea id="replyText" placeholder="Your reply" required></textarea>
-                <button class="reply-btn" data-thread-id="${thread.id}" type="submit">Submit Reply</button>
+            <textarea id="replyText" class="reply-textarea" placeholder="Your reply" required></textarea>
+            <button class="reply-btn" data-thread-id="${thread.id}" type="submit">Submit Reply</button>
             </form>
             <h3>Replies</h3>
-        `;
+        `;  
 
         for (const reply of replies) {
             const replyUser = await getUserWithId(reply.user_id); // Await the user for each reply
