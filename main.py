@@ -296,6 +296,22 @@ def make_admin(user_id: int, current_user: User = Depends(get_current_admin_user
     return db_user
 
 
+@app.put("/users/{user_id}/remove-admin", response_model=User)
+def remove_admin(user_id: int, current_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Prevent current user from removing their own admin rights
+    if current_user.id == db_user.id:
+        raise HTTPException(status_code=400, detail="You cannot remove admin rights from yourself")
+
+    db_user.is_admin = False
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
 @app.delete("/replies/{reply_id}", response_model=ReplyOut)
 def delete_reply(reply_id: int, current_user: User = Depends(get_current_admin_user), db: Session = Depends(get_db)):
     db_reply = db.query(models.Reply).filter(models.Reply.id == reply_id).first()

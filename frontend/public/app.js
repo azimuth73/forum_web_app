@@ -151,6 +151,28 @@ async function makeAdmin(userId) {
     }
 }
 
+async function removeAdmin(userId) {
+    try {
+        const response = await fetch(`${apiUrl}/users/${userId}/remove-admin`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            showMessage(`User ${userId} is no longer an admin.`);
+            searchUsers(); // Refresh the user list after removing admin rights
+        } else {
+            const error = await response.json();
+            showError(`Failed to remove admin: ${error.detail}`);
+        }
+    } catch (error) {
+        showError('Error removing admin: ' + error.message);
+    }
+}
+
 async function showUsers() {
     try {
         const response = await fetch(`${apiUrl}/users/`);
@@ -165,13 +187,13 @@ async function showUsers() {
         const userListDiv = document.getElementById('userList');
         users.forEach(user => {
             const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
-            const makeAdminButton = !user.is_admin 
-                ? `<button class="make-admin-btn" data-user-id="${user.id}" style="background-color: orange;">Make Admin</button>` 
-                : '';
+            const adminButton = user.is_admin 
+                ? `<button class="remove-admin-btn" data-user-id="${user.id}" style="background-color: red;">Remove Admin</button>`
+                : `<button class="make-admin-btn" data-user-id="${user.id}" style="background-color: orange;">Make Admin</button>`;
 
             userListDiv.innerHTML += `
                 <div class="user-entry">
-                    <p>${user.username} ${adminLabel} ${makeAdminButton}</p>
+                    <p>${user.username} ${adminLabel} ${adminButton}</p>
                 </div>
             `;
         });
@@ -179,9 +201,13 @@ async function showUsers() {
         // Attach event listener to search input
         document.getElementById('userSearch').addEventListener('input', searchUsers);
 
-        // Attach event listeners to the Make Admin buttons
+        // Attach event listeners to the Make Admin and Remove Admin buttons
         document.querySelectorAll('.make-admin-btn').forEach(button => {
             button.addEventListener('click', () => makeAdmin(button.dataset.userId));
+        });
+
+        document.querySelectorAll('.remove-admin-btn').forEach(button => {
+            button.addEventListener('click', () => removeAdmin(button.dataset.userId));
         });
     } catch (error) {
         showError('Error fetching users');
@@ -207,20 +233,24 @@ async function searchUsers() {
         } else {
             filteredUsers.forEach(user => {
                 const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
-                const makeAdminButton = !user.is_admin 
-                    ? `<button class="make-admin-btn" data-user-id="${user.id}" style="background-color: orange;">Make Admin</button>` 
-                    : '';
+                const adminButton = user.is_admin 
+                    ? `<button class="remove-admin-btn" data-user-id="${user.id}" style="background-color: red;">Remove Admin</button>`
+                    : `<button class="make-admin-btn" data-user-id="${user.id}" style="background-color: orange;">Make Admin</button>`;
 
                 userListDiv.innerHTML += `
                     <div class="user-entry">
-                        <p>${user.username} ${adminLabel} ${makeAdminButton}</p>
+                        <p>${user.username} ${adminLabel} ${adminButton}</p>
                     </div>
                 `;
             });
 
-            // Attach event listeners to the Make Admin buttons
+            // Attach event listeners to the Make Admin and Remove Admin buttons
             document.querySelectorAll('.make-admin-btn').forEach(button => {
                 button.addEventListener('click', () => makeAdmin(button.dataset.userId));
+            });
+
+            document.querySelectorAll('.remove-admin-btn').forEach(button => {
+                button.addEventListener('click', () => removeAdmin(button.dataset.userId));
             });
         }
 
@@ -228,7 +258,6 @@ async function searchUsers() {
         showError('Error fetching users');
     }
 }
-
 
 async function showThread(threadId) {
     try {
