@@ -187,9 +187,18 @@ async function showUsers() {
         const userListDiv = document.getElementById('userList');
         users.forEach(user => {
             const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
-            const adminButton = user.is_admin 
-                ? `<button class="remove-admin-btn" data-user-id="${user.id}" style="background-color: red;">Remove Admin</button>`
-                : `<button class="make-admin-btn" data-user-id="${user.id}" style="background-color: orange;">Make Admin</button>`;
+
+            // Only show "Make Admin" or "Remove Admin" buttons if the current user is an admin
+            let adminButton = '';
+
+            if (currentUser.is_admin) {
+                // Do not show "Remove Admin" button for the current logged-in admin user
+                if (user.is_admin && user.id !== currentUser.id) {
+                    adminButton = `<button class="remove-admin-btn" data-user-id="${user.id}" style="background-color: red;">Remove Admin</button>`;
+                } else if (!user.is_admin) {
+                    adminButton = `<button class="make-admin-btn" data-user-id="${user.id}" style="background-color: orange;">Make Admin</button>`;
+                }
+            }
 
             userListDiv.innerHTML += `
                 <div class="user-entry">
@@ -233,9 +242,18 @@ async function searchUsers() {
         } else {
             filteredUsers.forEach(user => {
                 const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
-                const adminButton = user.is_admin 
-                    ? `<button class="remove-admin-btn" data-user-id="${user.id}" style="background-color: red;">Remove Admin</button>`
-                    : `<button class="make-admin-btn" data-user-id="${user.id}" style="background-color: orange;">Make Admin</button>`;
+
+                // Only show "Make Admin" or "Remove Admin" buttons if the current user is an admin
+                let adminButton = '';
+
+                if (currentUser.is_admin) {
+                    // Do not show "Remove Admin" button for the current logged-in admin user
+                    if (user.is_admin && user.id !== currentUser.id) {
+                        adminButton = `<button class="remove-admin-btn" data-user-id="${user.id}" style="background-color: red;">Remove Admin</button>`;
+                    } else if (!user.is_admin) {
+                        adminButton = `<button class="make-admin-btn" data-user-id="${user.id}" style="background-color: orange;">Make Admin</button>`;
+                    }
+                }
 
                 userListDiv.innerHTML += `
                     <div class="user-entry">
