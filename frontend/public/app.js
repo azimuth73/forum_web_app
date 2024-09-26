@@ -188,10 +188,10 @@ async function showUsers() {
         users.forEach(user => {
             const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
 
-            // Only show "Make Admin" or "Remove Admin" buttons if the current user is an admin
+            // Only show "Make Admin" or "Remove Admin" buttons if the current user is logged in and is an admin
             let adminButton = '';
 
-            if (currentUser.is_admin) {
+            if (currentUser && currentUser.is_admin) {
                 // Do not show "Remove Admin" button for the current logged-in admin user
                 if (user.is_admin && user.id !== currentUser.id) {
                     adminButton = `<button class="remove-admin-btn" data-user-id="${user.id}" style="background-color: red;">Remove Admin</button>`;
@@ -243,10 +243,10 @@ async function searchUsers() {
             filteredUsers.forEach(user => {
                 const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
 
-                // Only show "Make Admin" or "Remove Admin" buttons if the current user is an admin
+                // Only show "Make Admin" or "Remove Admin" buttons if the current user is logged in and is an admin
                 let adminButton = '';
 
-                if (currentUser.is_admin) {
+                if (currentUser && currentUser.is_admin) {
                     // Do not show "Remove Admin" button for the current logged-in admin user
                     if (user.is_admin && user.id !== currentUser.id) {
                         adminButton = `<button class="remove-admin-btn" data-user-id="${user.id}" style="background-color: red;">Remove Admin</button>`;
