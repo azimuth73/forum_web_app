@@ -146,8 +146,35 @@ async function showUsers() {
 }
 
 async function searchUsers() {
-    const searchValue = document.getElementById('userSearch').value;
-    // Implement search logic based on username
+    const searchValue = document.getElementById('userSearch').value.toLowerCase().trim();
+
+    if (!searchValue) {
+        showUsers(); // If search is empty, show all users again
+        return;
+    }
+
+    try {
+        const response = await fetch(`${apiUrl}/users/`);
+        const users = await response.json();
+
+        const filteredUsers = users.filter(user => user.username.toLowerCase().includes(searchValue));
+
+        let html = '<h2>Users</h2>';
+        html += '<input type="text" id="userSearch" placeholder="Search by name" value="' + searchValue + '"><button onclick="searchUsers()">Search</button>';
+
+        if (filteredUsers.length === 0) {
+            html += `<p>No users found with the name "${searchValue}".</p>`;
+        } else {
+            filteredUsers.forEach(user => {
+                const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
+                html += `<p>${user.username} ${adminLabel}</p>`;
+            });
+        }
+
+        mainContent.innerHTML = html;
+    } catch (error) {
+        showError('Error fetching users');
+    }
 }
 
 async function showThread(threadId) {
