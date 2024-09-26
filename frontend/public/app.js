@@ -49,6 +49,15 @@ function attachEventListeners() {
     document.querySelectorAll('.reply-btn').forEach(button => {
         button.addEventListener('click', e => createReply(e, button.dataset.threadId));
     });
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', () => showEditThreadForm(button.dataset.threadId));
+    });
+    document.querySelectorAll('.delete-reply-btn').forEach(button => {
+        button.addEventListener('click', () => deleteReply(button.dataset.replyId, button.dataset.threadId));
+    });
+    document.querySelectorAll('.edit-reply-btn').forEach(button => {
+        button.addEventListener('click', () => showEditReplyForm(button.dataset.replyId, button.dataset.threadId));
+    });
 }
 
 async function getUserInfo() {
@@ -288,13 +297,12 @@ async function showThread(threadId) {
         let html = `
             <div class="thread">
                 <h2>${thread.title}</h2>
-                <small><i><p>Written by <b>${user ? user.username : 'Unknown'}</b> on ${new Date(thread.created).toLocaleString()}</p></i></small>
+                <small><i><p>Written by <b>${user ? user.username : 'Unknown'}</b> on ${new Date(thread.created).toLocaleString()}${thread.edited ? ' (edited)' : ''}</p></i></small>
                 <p>${thread.text}</p>
                 ${getThreadControls(thread)}
             </div>
         `;
         
-        // Only show the reply form if a user is logged in
         if (currentUser) {
             html += `
                 <h3>Add a reply:</h3>
@@ -308,26 +316,124 @@ async function showThread(threadId) {
         html += `<h3>Replies</h3>`;  
 
         for (const reply of replies) {
-            const replyUser = await getUserWithId(reply.user_id); // Await the user for each reply
+            const replyUser = await getUserWithId(reply.user_id);
             html += `
                 <div class="reply">
-                    <small><i><p>Replied by <b>${replyUser ? replyUser.username : 'Unknown'}</b> on ${new Date(reply.created).toLocaleString()}</p></i></small>
+                    <small><i><p>Replied by <b>${replyUser ? replyUser.username : 'Unknown'}</b> on ${new Date(reply.created).toLocaleString()}${reply.edited ? ' (edited)' : ''}</p></i></small>
                     <p>${reply.text}</p>
+                    ${currentUser && (currentUser.is_admin || currentUser.id === reply.user_id) ? 
+                        `<button class="edit-reply-btn" data-reply-id="${reply.id}" data-thread-id="${threadId}">Edit</button>` : ''}
+                    ${currentUser && currentUser.is_admin ? 
+                        `<button class="delete-reply-btn" data-reply-id="${reply.id}" data-thread-id="${threadId}">Delete</button>` : ''}
                 </div>
             `;
         }
 
         mainContent.innerHTML = html;
 
-        // Attach event listener for reply form submission if the user is logged in
         if (currentUser) {
-            attachEventListeners(); 
+            attachEventListeners();
         }
+
+        // Add event listeners for new buttons
+        document.querySelectorAll('.delete-reply-btn').forEach(button => {
+            button.addEventListener('click', () => deleteReply(button.dataset.replyId, button.dataset.threadId));
+        });
+        document.querySelectorAll('.edit-reply-btn').forEach(button => {
+            button.addEventListener('click', () => showEditReplyForm(button.dataset.replyId, button.dataset.threadId));
+        });
     } catch (error) {
         showError('Error fetching thread and replies');
     }
 }
 
+function showEditThreadForm(threadId) {
+    fetch(`${apiUrl}/threads/${threadId}`)
+        .then(response => response.json())
+        .then(thread => {
+            mainContent.innerHTML = `
+                <h2>Edit Thread</h2>
+                <form id="editThreadForm" class="edit-thread-form">
+                    <input type="text" id="editThreadTitle" value="${thread.title}" required class="thread-title-input">
+                    <textarea id="editThreadText" class="reply-textarea" required>${thread.text}</textarea>
+                    <button type="submit" class="submit-btn">Update Thread</button>
+                </form>
+            `;
+            document.getElementById('editThreadForm').addEventListener('submit', (e) => editThread(e, threadId));
+        })
+        .catch(error => showError('Error fetching thread details'));
+}
+
+async function editThread(e, threadId) {
+    e.preventDefault();
+    const title = document.getElementById('editThreadTitle').value;
+    const text = document.getElementById('editThreadText').value;
+    try {
+        const response = await fetch(`${apiUrl}/threads/${threadId}/edit`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ title, text })
+        });
+        if (response.ok) {
+            showThread(threadId);
+            showMessage('Thread updated successfully');
+        } else {
+            const error = await response.json();
+            showError(error.detail);
+        }
+    } catch (error) {
+        showError('Error updating thread');
+    }
+}
+
+function showEditReplyForm(replyId, threadId) {
+    fetch(`${apiUrl}/replies/${replyId}`)
+        .then(response => response.json())
+        .then(reply => {
+            const replyElement = document.querySelector(`.reply button[data-reply-id="${replyId}"]`).closest('.reply');
+            const originalContent = replyElement.innerHTML;
+            replyElement.innerHTML = `
+                <form id="editReplyForm-${replyId}" class="edit-reply-form">
+                    <textarea id="editReplyText-${replyId}" class="reply-textarea" required>${reply.text}</textarea>
+                    <button type="submit" class="submit-btn">Update Reply</button>
+                    <button type="button" class="cancel-btn">Cancel</button>
+                </form>
+            `;
+            document.getElementById(`editReplyForm-${replyId}`).addEventListener('submit', (e) => editReply(e, replyId, threadId));
+            document.querySelector(`#editReplyForm-${replyId} .cancel-btn`).addEventListener('click', () => {
+                replyElement.innerHTML = originalContent;
+                attachEventListeners();
+            });
+        })
+        .catch(error => showError('Error fetching reply details'));
+}
+
+async function editReply(e, replyId, threadId) {
+    e.preventDefault();
+    const text = document.getElementById(`editReplyText-${replyId}`).value;
+    try {
+        const response = await fetch(`${apiUrl}/replies/${replyId}/edit`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ text })
+        });
+        if (response.ok) {
+            showThread(threadId);
+            showMessage('Reply updated successfully');
+        } else {
+            const error = await response.json();
+            showError(error.detail);
+        }
+    } catch (error) {
+        showError('Error updating reply');
+    }
+}
 
 function sortThreadsByDate(order) {
     // Fetch and sort threads by date in ascending/descending order
@@ -426,7 +532,24 @@ async function createReply(e, threadId) {
     }
 }
 
-
+async function deleteReply(replyId, threadId) {
+    if (!currentUser || !currentUser.is_admin) return;
+    try {
+        const response = await fetch(`${apiUrl}/replies/${replyId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            showThread(threadId);
+            showMessage('Reply deleted successfully');
+        } else {
+            const error = await response.json();
+            showError(error.detail);
+        }
+    } catch (error) {
+        showError('Error deleting reply');
+    }
+}
 
 async function deleteThread(threadId) {
     if (!currentUser || !currentUser.is_admin) return;
