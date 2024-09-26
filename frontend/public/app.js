@@ -129,6 +129,27 @@ function getThreadControls(thread) {
     return controls;
 }
 
+async function makeAdmin(userId) {
+    try {
+        const response = await fetch(`${apiUrl}/users/${userId}/make-admin`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            showMessage(`User ${userId} is now an admin.`);
+            searchUsers(); // Refresh the user list after making someone an admin
+        } else {
+            const error = await response.json();
+            showError(`Failed to make admin: ${error.detail}`);
+        }
+    } catch (error) {
+        showError('Error making admin: ' + error.message);
+    }
+}
 
 async function showUsers() {
     try {
@@ -144,11 +165,24 @@ async function showUsers() {
         const userListDiv = document.getElementById('userList');
         users.forEach(user => {
             const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
-            userListDiv.innerHTML += `<p>${user.username} ${adminLabel}</p>`;
+            const makeAdminButton = !user.is_admin 
+                ? `<button class="make-admin-btn" data-user-id="${user.id}" style="background-color: orange;">Make Admin</button>` 
+                : '';
+
+            userListDiv.innerHTML += `
+                <div class="user-entry">
+                    <p>${user.username} ${adminLabel} ${makeAdminButton}</p>
+                </div>
+            `;
         });
 
-        // Attach the input event listener to the search field
+        // Attach event listener to search input
         document.getElementById('userSearch').addEventListener('input', searchUsers);
+
+        // Attach event listeners to the Make Admin buttons
+        document.querySelectorAll('.make-admin-btn').forEach(button => {
+            button.addEventListener('click', () => makeAdmin(button.dataset.userId));
+        });
     } catch (error) {
         showError('Error fetching users');
     }
@@ -173,7 +207,20 @@ async function searchUsers() {
         } else {
             filteredUsers.forEach(user => {
                 const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
-                userListDiv.innerHTML += `<p>${user.username} ${adminLabel}</p>`;
+                const makeAdminButton = !user.is_admin 
+                    ? `<button class="make-admin-btn" data-user-id="${user.id}" style="background-color: orange;">Make Admin</button>` 
+                    : '';
+
+                userListDiv.innerHTML += `
+                    <div class="user-entry">
+                        <p>${user.username} ${adminLabel} ${makeAdminButton}</p>
+                    </div>
+                `;
+            });
+
+            // Attach event listeners to the Make Admin buttons
+            document.querySelectorAll('.make-admin-btn').forEach(button => {
+                button.addEventListener('click', () => makeAdmin(button.dataset.userId));
             });
         }
 
