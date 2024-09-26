@@ -89,6 +89,7 @@ main {
     z-index: 1000;
 }
 
+/* Common styling for text areas */
 .reply-textarea {
     width: 100%; /* Full width of the parent container */
     height: auto; /* Height adjusts automatically based on content */
@@ -96,4 +97,44 @@ main {
     max-height: 200px; /* Maximum height */
     resize: vertical; /* Allow vertical resizing only */
     box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+/* Thread title input styling */
+.thread-title-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+/* Submit button styling */
+.submit-btn {
+    background-color: #4CAF50; /* Green background */
+    color: white; /* White text */
+    padding: 10px 20px; /* Padding around text */
+    border: none; /* Remove border */
+    border-radius: 4px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor on hover */
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+    background-color: #45a049; /* Darker green on hover */
+}
+
+/* Optional: style the form container */
+.create-thread-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between input fields */
+    max-width: 600px; /* Limit form width */
+    margin: 0 auto; /* Center the form horizontally */
 }

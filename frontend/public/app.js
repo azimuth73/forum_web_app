@@ -341,14 +341,15 @@ function showCreateThreadForm() {
     }
     mainContent.innerHTML = `
         <h2>Create New Thread</h2>
-        <form id="createThreadForm">
-            <input type="text" id="threadTitle" placeholder="Thread Title" required>
-            <textarea id="threadText" placeholder="Thread Content" required></textarea>
-            <button type="submit">Create Thread</button>
+        <form id="createThreadForm" class="create-thread-form">
+            <input type="text" id="threadTitle" placeholder="Thread Title" required class="thread-title-input">
+            <textarea id="threadText" class="reply-textarea" placeholder="Thread Content" required></textarea>
+            <button type="submit" class="submit-btn">Create Thread</button>
         </form>
     `;
     document.getElementById('createThreadForm').addEventListener('submit', createThread);
 }
+
 
 async function createThread(e) {
     e.preventDefault();
