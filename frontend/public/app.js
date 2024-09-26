@@ -294,14 +294,18 @@ async function showThread(threadId) {
             </div>
         `;
         
-        html += `
-            <h3>Add a reply:</h3>
-            <form id="replyForm">
-            <textarea id="replyText" class="reply-textarea" placeholder="Your reply" required></textarea>
-            <button class="reply-btn" data-thread-id="${thread.id}" type="submit">Submit Reply</button>
-            </form>
-            <h3>Replies</h3>
-        `;  
+        // Only show the reply form if a user is logged in
+        if (currentUser) {
+            html += `
+                <h3>Add a reply:</h3>
+                <form id="replyForm">
+                    <textarea id="replyText" class="reply-textarea" placeholder="Your reply" required></textarea>
+                    <button class="reply-btn" data-thread-id="${thread.id}" type="submit">Submit Reply</button>
+                </form>
+            `;
+        }
+
+        html += `<h3>Replies</h3>`;  
 
         for (const reply of replies) {
             const replyUser = await getUserWithId(reply.user_id); // Await the user for each reply
@@ -314,7 +318,11 @@ async function showThread(threadId) {
         }
 
         mainContent.innerHTML = html;
-        attachEventListeners(); // Attach event listener for reply form submission
+
+        // Attach event listener for reply form submission if the user is logged in
+        if (currentUser) {
+            attachEventListeners(); 
+        }
     } catch (error) {
         showError('Error fetching thread and replies');
     }
