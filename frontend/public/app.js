@@ -129,17 +129,26 @@ function getThreadControls(thread) {
     return controls;
 }
 
+
 async function showUsers() {
     try {
         const response = await fetch(`${apiUrl}/users/`);
         const users = await response.json();
+
         let html = '<h2>Users</h2>';
-        html += '<input type="text" id="userSearch" placeholder="Search by name"><button onclick="searchUsers()">Search</button>';
+        html += '<input type="text" id="userSearch" placeholder="Search by name">';
+        html += '<div id="userList"></div>'; // This div will hold the user list
+
+        mainContent.innerHTML = html;
+
+        const userListDiv = document.getElementById('userList');
         users.forEach(user => {
             const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
-            html += `<p>${user.username} ${adminLabel}</p>`;
+            userListDiv.innerHTML += `<p>${user.username} ${adminLabel}</p>`;
         });
-        mainContent.innerHTML = html;
+
+        // Attach the input event listener to the search field
+        document.getElementById('userSearch').addEventListener('input', searchUsers);
     } catch (error) {
         showError('Error fetching users');
     }
@@ -148,34 +157,31 @@ async function showUsers() {
 async function searchUsers() {
     const searchValue = document.getElementById('userSearch').value.toLowerCase().trim();
 
-    if (!searchValue) {
-        showUsers(); // If search is empty, show all users again
-        return;
-    }
-
     try {
         const response = await fetch(`${apiUrl}/users/`);
         const users = await response.json();
 
-        const filteredUsers = users.filter(user => user.username.toLowerCase().includes(searchValue));
+        const filteredUsers = searchValue
+            ? users.filter(user => user.username.toLowerCase().includes(searchValue))
+            : users; // If search is empty, show all users
 
-        let html = '<h2>Users</h2>';
-        html += '<input type="text" id="userSearch" placeholder="Search by name" value="' + searchValue + '"><button onclick="searchUsers()">Search</button>';
+        const userListDiv = document.getElementById('userList');
+        userListDiv.innerHTML = ''; // Clear existing user list
 
         if (filteredUsers.length === 0) {
-            html += `<p>No users found with the name "${searchValue}".</p>`;
+            userListDiv.innerHTML = `<p>No users found with the name "${searchValue}".</p>`;
         } else {
             filteredUsers.forEach(user => {
                 const adminLabel = user.is_admin ? `<span class="admin">(Admin)</span>` : '';
-                html += `<p>${user.username} ${adminLabel}</p>`;
+                userListDiv.innerHTML += `<p>${user.username} ${adminLabel}</p>`;
             });
         }
 
-        mainContent.innerHTML = html;
     } catch (error) {
         showError('Error fetching users');
     }
 }
+
 
 async function showThread(threadId) {
     try {
