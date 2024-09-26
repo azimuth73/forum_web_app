@@ -63,6 +63,31 @@ async function getUserInfo() {
     }
 }
 
+async function getUserWithId(userId) {
+    try {
+        const response = await fetch(`${apiUrl}/users/`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+            showError('Error fetching users');
+            return null;
+        }
+        
+        const users = await response.json();
+        const user = users.find(user => user.id === userId);
+
+        if (user) {
+            return user;
+        } else {
+            showError(`User with ID ${userId} not found`);
+            return null;
+        }
+    } catch (error) {
+        showError('Error fetching users: ' + error.message);
+        return null;
+    }
+}
+
 async function showHome() {
     try {
         const response = await fetch(`${apiUrl}/threads/`);
@@ -72,17 +97,19 @@ async function showHome() {
             html += '<button class="create-thread-btn">Create New Thread</button>';
         }
         html += '<div><button onclick="sortThreadsByDate(\'asc\')">Sort Ascending</button> <button onclick="sortThreadsByDate(\'desc\')">Sort Descending</button></div>';
-        threads.forEach(thread => {
+
+        for (const thread of threads) {
+            const user = await getUserWithId(thread.user_id); // Await user data
             html += `
                 <div class="thread">
                     <h3>${thread.title}</h3>
-                    <p>By ${thread.username} on ${new Date(thread.created).toLocaleString()}</p>
+                    <small><i><p>Written by <b>${user ? user.username : 'Unknown'}</b> on ${new Date(thread.created).toLocaleString()}</p></i></small>
                     <p>${thread.text}</p>
                     <button class="view-replies-btn" data-thread-id="${thread.id}">View Replies</button>
                     ${getThreadControls(thread)}
                 </div>
             `;
-        });
+        }
         mainContent.innerHTML = html;
         attachEventListeners(); // Bind buttons after rendering
     } catch (error) {
@@ -129,30 +156,35 @@ async function showThread(threadId) {
         const thread = await threadResponse.json();
         const repliesResponse = await fetch(`${apiUrl}/threads/${threadId}/replies/`);
         const replies = await repliesResponse.json();
+        const user = await getUserWithId(thread.user_id); 
 
         let html = `
-            <h2>${thread.title}</h2>
-            <p>By ${thread.username} on ${new Date(thread.created).toLocaleString()}</p>
-            <p>${thread.text}</p>
-            <h3>Replies</h3>
+            <div class="thread">
+                <h2>${thread.title}</h2>
+                <small><i><p>Written by <b>${user ? user.username : 'Unknown'}</b> on ${new Date(thread.created).toLocaleString()}</p></i></small>
+                <p>${thread.text}</p>
+                ${getThreadControls(thread)}
+            </div>
         `;
-
-        replies.forEach(reply => {
-            html += `
-                <div class="reply">
-                    <p>${reply.text}</p>
-                    <p>By ${reply.username} on ${new Date(reply.created).toLocaleString()}</p>
-                </div>
-            `;
-        });
-
+        
         html += `
-            <h3>Add Reply</h3>
+            <h3>Add a reply:</h3>
             <form id="replyForm">
                 <textarea id="replyText" placeholder="Your reply" required></textarea>
                 <button class="reply-btn" data-thread-id="${thread.id}" type="submit">Submit Reply</button>
             </form>
+            <h3>Replies</h3>
         `;
+
+        for (const reply of replies) {
+            const replyUser = await getUserWithId(reply.user_id); // Await the user for each reply
+            html += `
+                <div class="reply">
+                    <small><i><p>Replied by <b>${replyUser ? replyUser.username : 'Unknown'}</b> on ${new Date(reply.created).toLocaleString()}</p></i></small>
+                    <p>${reply.text}</p>
+                </div>
+            `;
+        }
 
         mainContent.innerHTML = html;
         attachEventListeners(); // Attach event listener for reply form submission
@@ -160,6 +192,7 @@ async function showThread(threadId) {
         showError('Error fetching thread and replies');
     }
 }
+
 
 function sortThreadsByDate(order) {
     // Fetch and sort threads by date in ascending/descending order
