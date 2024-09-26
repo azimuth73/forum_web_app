@@ -59,6 +59,7 @@ class User(BaseModel):
     id: int
     username: str
     is_admin: bool
+    created: datetime
 
 
 class Token(BaseModel):
@@ -176,7 +177,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     is_admin = user_count == 0
 
     # Create the new user
-    new_user = models.User(username=user.username, password=hashed_password, is_admin=is_admin)
+    new_user = models.User(username=user.username, password=hashed_password, is_admin=is_admin, created=datetime.now())
     db.add(new_user)
     db.commit()
     db.refresh(new_user)

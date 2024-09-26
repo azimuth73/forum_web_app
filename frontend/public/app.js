@@ -202,7 +202,7 @@ async function showUsers() {
 
             userListDiv.innerHTML += `
                 <div class="user-entry">
-                    <p>${user.username} ${adminLabel} ${adminButton}</p>
+                    <p><b>${user.username}</b> <small><i>joined on ${new Date(user.created).toLocaleString()}</i></small> ${adminLabel} ${adminButton}</p>
                 </div>
             `;
         });
@@ -257,7 +257,7 @@ async function searchUsers() {
 
                 userListDiv.innerHTML += `
                     <div class="user-entry">
-                        <p>${user.username} ${adminLabel} ${adminButton}</p>
+                        <p><b>${user.username}</b> <small><i>joined on ${new Date(user.created).toLocaleString()}</i></small> ${adminLabel} ${adminButton}</p>
                     </div>
                 `;
             });

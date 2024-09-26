@@ -9,6 +9,7 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     password = Column(String)
     is_admin = Column(Boolean, default=False)
+    created = Column(DateTime)
 
 
 class Thread(Base):
