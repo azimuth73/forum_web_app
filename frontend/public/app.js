@@ -66,7 +66,8 @@ async function getUserInfo() {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         currentUser = await response.json();
-        usernameDisplay.textContent = `${currentUser.username}`;
+        //usernameDisplay.textContent = `${currentUser.username}`;
+        usernameDisplay.innerHTML = `<b>${currentUser.username}</b>`;
     } catch (error) {
         console.error('Error fetching user info:', error);
     }
