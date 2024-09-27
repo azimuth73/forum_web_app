@@ -403,9 +403,13 @@ function showEditReplyForm(replyId, threadId) {
         .then(reply => {
             const replyElement = document.querySelector(`.reply button[data-reply-id="${replyId}"]`).closest('.reply');
             const originalContent = replyElement.innerHTML;
+            
+            // Ensure we're using the correct property for the reply text
+            const replyText = reply.text || '';  // Use an empty string as fallback
+            
             replyElement.innerHTML = `
                 <form id="editReplyForm-${replyId}" class="edit-reply-form">
-                    <textarea id="editReplyText-${replyId}" class="reply-textarea" required>${reply.text}</textarea>
+                    <textarea id="editReplyText-${replyId}" class="reply-textarea" required>${replyText}</textarea>
                     <button type="submit" class="submit-btn">Update Reply</button>
                     <button type="button" class="cancel-btn">Cancel</button>
                 </form>
@@ -416,7 +420,10 @@ function showEditReplyForm(replyId, threadId) {
                 attachEventListeners();
             });
         })
-        .catch(error => showError('Error fetching reply details'));
+        .catch(error => {
+            console.error('Error fetching reply details:', error);
+            showError('Error fetching reply details');
+        });
 }
 
 async function editReply(e, replyId, threadId) {
@@ -439,6 +446,7 @@ async function editReply(e, replyId, threadId) {
             showError(error.detail);
         }
     } catch (error) {
+        console.error('Error updating reply:', error);
         showError('Error updating reply');
     }
 }
