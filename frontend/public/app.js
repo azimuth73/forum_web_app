@@ -590,6 +590,7 @@ function showRegisterForm() {
         <form id="registerForm">
             <input type="text" id="regUsername" placeholder="Username" required>
             <input type="password" id="regPassword" placeholder="Password" required>
+            <input type="password" id="regPasswordConfirm" placeholder="Confirm Password" required>
             <button type="submit">Register</button>
         </form>
     `;
@@ -612,6 +613,13 @@ async function register(e) {
     e.preventDefault();
     const username = document.getElementById('regUsername').value;
     const password = document.getElementById('regPassword').value;
+    const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+
+    if (password !== passwordConfirm) {
+        showError('Passwords do not match');
+        return;
+    }
+
     try {
         const response = await fetch(`${apiUrl}/register`, {
             method: 'POST',
