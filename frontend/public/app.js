@@ -351,15 +351,23 @@ function showEditThreadForm(threadId) {
     fetch(`${apiUrl}/threads/${threadId}`)
         .then(response => response.json())
         .then(thread => {
+            const originalContent = mainContent.innerHTML;
             mainContent.innerHTML = `
                 <h2>Edit Thread</h2>
                 <form id="editThreadForm" class="edit-thread-form">
                     <input type="text" id="editThreadTitle" value="${thread.title}" required class="thread-title-input">
                     <textarea id="editThreadText" class="reply-textarea" required>${thread.text}</textarea>
-                    <button type="submit" class="submit-btn">Update Thread</button>
+                    <div class="button-group">
+                        <button type="submit" class="submit-btn">Update Thread</button>
+                        <button type="button" class="cancel-btn">Cancel</button>
+                    </div>
                 </form>
             `;
             document.getElementById('editThreadForm').addEventListener('submit', (e) => editThread(e, threadId));
+            document.querySelector('#editThreadForm .cancel-btn').addEventListener('click', () => {
+                mainContent.innerHTML = originalContent;
+                attachEventListeners();
+            });
         })
         .catch(error => showError('Error fetching thread details'));
 }

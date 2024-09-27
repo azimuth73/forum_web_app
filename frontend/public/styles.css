@@ -154,3 +154,16 @@ button.delete-reply-btn {
 button.delete-reply-btn:hover {
     background-color: #e53935;
 }
+
+.button-group {
+    display: flex;
+    gap: 10px;
+}
+
+.cancel-btn {
+    background-color: #777;
+}
+
+.cancel-btn:hover {
+    background-color: #555;
+}
