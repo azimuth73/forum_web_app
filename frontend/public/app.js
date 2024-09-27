@@ -321,7 +321,7 @@ async function showThread(threadId) {
                 <div class="reply">
                     <small><i><p>Replied by <b>${replyUser ? replyUser.username : 'Unknown'}</b> on ${new Date(reply.created).toLocaleString()}${reply.edited ? ' (edited)' : ''}</p></i></small>
                     <p>${reply.text}</p>
-                    ${currentUser && (currentUser.is_admin || currentUser.id === reply.user_id) ? 
+                    ${currentUser && currentUser.id === reply.user_id ? 
                         `<button class="edit-reply-btn" data-reply-id="${reply.id}" data-thread-id="${threadId}">Edit</button>` : ''}
                     ${currentUser && currentUser.is_admin ? 
                         `<button class="delete-reply-btn" data-reply-id="${reply.id}" data-thread-id="${threadId}">Delete</button>` : ''}

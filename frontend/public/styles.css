@@ -138,3 +138,19 @@ main {
     max-width: 600px; /* Limit form width */
     margin: 0 auto; /* Center the form horizontally */
 }
+
+button.edit-reply-btn {
+    background-color: #2196F3;
+}
+
+button.edit-reply-btn:hover {
+    background-color: #1976D2;
+}
+
+button.delete-reply-btn {
+    background-color: #f44336;
+}
+
+button.delete-reply-btn:hover {
+    background-color: #e53935;
+}
