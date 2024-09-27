@@ -112,7 +112,7 @@ async function showHome() {
             html += `
                 <div class="thread">
                     <h3>${thread.title}</h3>
-                    <small><i><p>Written by <b>${user ? user.username : 'Unknown'}</b> on ${new Date(thread.created).toLocaleString()}</p></i></small>
+                    <small><i><p>Written by <b>${user ? user.username : 'Unknown'}</b> on ${new Date(thread.created).toLocaleString()}${thread.edited ? ' (edited)' : ''}</p></i></small>
                     <p>${thread.text}</p>
                     <button class="view-replies-btn" data-thread-id="${thread.id}">View Replies</button>
                     ${getThreadControls(thread)}
