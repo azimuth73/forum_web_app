@@ -351,7 +351,6 @@ function showEditThreadForm(threadId) {
     fetch(`${apiUrl}/threads/${threadId}`)
         .then(response => response.json())
         .then(thread => {
-            const originalContent = mainContent.innerHTML;
             mainContent.innerHTML = `
                 <h2>Edit Thread</h2>
                 <form id="editThreadForm" class="edit-thread-form">
@@ -365,8 +364,7 @@ function showEditThreadForm(threadId) {
             `;
             document.getElementById('editThreadForm').addEventListener('submit', (e) => editThread(e, threadId));
             document.querySelector('#editThreadForm .cancel-btn').addEventListener('click', () => {
-                mainContent.innerHTML = originalContent;
-                attachEventListeners();
+                showThread(threadId);  // This will take the user back to the thread view
             });
         })
         .catch(error => showError('Error fetching thread details'));
