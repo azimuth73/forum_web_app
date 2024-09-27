@@ -393,3 +393,15 @@ def edit_reply(reply_id: int, reply_data: ReplyEdit, current_user: User = Securi
     db.commit()
     db.refresh(db_reply)
     return db_reply
+
+
+@app.get("/replies/{reply_id}", response_model=ReplyOut)
+def get_reply(reply_id: int, db: Session = Depends(get_db)):
+    # Fetch the reply by reply_id
+    db_reply = db.query(models.Reply).filter(models.Reply.id == reply_id).first()
+    
+    # Check if the reply exists
+    if db_reply is None:
+        raise HTTPException(status_code=404, detail="Reply not found")
+    
+    return db_reply
