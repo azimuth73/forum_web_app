@@ -104,10 +104,8 @@ async function showHome() {
         const threads = await response.json();
         let html = '<h2>Threads</h2>';
         if (token) {
-            html += '<button class="create-thread-btn">Create New Thread</button>';
+            html += '<button style="margin-bottom: 10px;" class="create-thread-btn">Create New Thread</button>';
         }
-        html += '<div><button onclick="sortThreadsByDate(\'asc\')">Sort Ascending</button> <button onclick="sortThreadsByDate(\'desc\')">Sort Descending</button></div>';
-
         for (const thread of threads) {
             const user = await getUserWithId(thread.user_id); // Await user data
             html += `
@@ -150,7 +148,7 @@ async function makeAdmin(userId) {
         });
 
         if (response.ok) {
-            showMessage(`User ${userId} is now an admin.`);
+            
             searchUsers(); // Refresh the user list after making someone an admin
         } else {
             const error = await response.json();
@@ -172,7 +170,7 @@ async function removeAdmin(userId) {
         });
 
         if (response.ok) {
-            showMessage(`User ${userId} is no longer an admin.`);
+            
             searchUsers(); // Refresh the user list after removing admin rights
         } else {
             const error = await response.json();
@@ -450,11 +448,6 @@ async function editReply(e, replyId, threadId) {
     }
 }
 
-function sortThreadsByDate(order) {
-    // Fetch and sort threads by date in ascending/descending order
-    showHome(); // Call showHome to re-render the sorted threads
-}
-
 function showCreateThreadForm() {
     if (!token) {
         showError('You must be logged in to create a thread');
@@ -680,13 +673,13 @@ function logout() {
 function showError(message) {
     popup.classList.remove('hidden');
     popup.textContent = message;
-    setTimeout(() => popup.classList.add('hidden'), 5000);
+    setTimeout(() => popup.classList.add('hidden'), 1000);
 }
 
 function showMessage(message) {
     popup.classList.remove('hidden');
     popup.textContent = message;
-    setTimeout(() => popup.classList.add('hidden'), 5000);
+    setTimeout(() => popup.classList.add('hidden'), 1000);
 }
 
 // Initialize the app with the home page and correct navigation state
